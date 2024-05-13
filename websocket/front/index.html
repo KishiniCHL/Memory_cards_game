@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <p>last message</p>
+    <p class="data"></p>
+    <input type="text" id="username" placeholder="Enter username">
+    <button onclick="setUsername()">Set Username</button>
+    <textarea name="" id="" cols="30" rows="10"></textarea>
+    <button onclick="send()">Refresh</button>
+
+</body>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO" crossorigin="anonymous"></script>
+<script>
+    let i = 0;
+    let room = '';
+    let socketid = '';
+    const text = document.querySelector('textarea');
+    const usernameInput = document.querySelector('#username');
+    const socket = io('http://localhost:3000');
+    socket.on('connect', () => {
+        console.log('Connected');
+    });
+    socket.on('message', (data) => {
+        console.log(data);
+        document.querySelector('.data').innerText = data;
+    });
+    socket.on('disconnect', () => {
+        console.log('Disconnected');
+    });
+
+    let setUsername = () => {
+        socket.emit('setUsername', usernameInput.value);
+    }
+
+    let send = () => {
+        i++;
+        console.log(text.value);
+        socket.emit('room', text.value, `Message room ${i}`);
+    }
+    text.addEventListener('change', (e) => {
+        socket.emit('leave', room);
+        socket.emit('join', e.target.value);
+        room = e.target.value;
+    });
+
+</script>
+</html>
