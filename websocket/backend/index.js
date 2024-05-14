@@ -1,8 +1,10 @@
-import express from 'express';
-import http from 'http';
-import ip from 'ip';
-import { Server } from 'socket.io';
-import cors from 'cors';
+const express = require('express');
+const http = require('http');
+// const socketIo = require('socket.io');
+const ip = require('ip');
+const { Server } = require('socket.io');
+const cors = require('cors');
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
@@ -14,8 +16,12 @@ const io = new Server(server, {
 })
 
 app.use(cors())
+// Serve static files from the "frontend" directory
+app.use(express.static(path.join(__dirname, '../front')));
+
+// Route to serve the frontend
 app.get('/', (req, res) => {
-    res.json('ip address: http://' + ip.address()+':'+PORT);    
+    res.sendFile(path.join(__dirname, '../front/index.html'));
 });
 
 let users = {};
