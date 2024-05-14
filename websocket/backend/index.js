@@ -35,20 +35,20 @@ io.on('connection', (socket) => {
         console.log(`${username} connected`);
     });
 
-    socket.on('createRoom', (username) => {
-        socket.join(username);
-        roomsData[username] = { creator: users[socket.id] }; // Store the creator in the room data
-        console.log(`Room created: ${username}`);
+    socket.on('createRoom', (roomName) => {
+        socket.join(roomName);
+        roomsData[roomName] = { creator: users[socket.id] }; // Store the creator in the room data
+        console.log(`Room created: ${roomName}`);
         const rooms = Array.from(io.sockets.adapter.rooms.keys())
             .filter(room => roomsData[room]); 
-        const roomsWithUserData = rooms.map((room, index) => ({ room: 'room ' + (index + 1), ...roomsData[room] })); 
+        const roomsWithUserData = rooms.map(room => ({ room, ...roomsData[room] })); 
         socket.emit('roomsList', roomsWithUserData);
     });
-
+    
     socket.on('getRooms', () => {
         const rooms = Array.from(io.sockets.adapter.rooms.keys())
             .filter(room => roomsData[room]); 
-        const roomsWithUserData = rooms.map((room, index) => ({ room: 'room ' + (index + 1), ...roomsData[room] })); 
+        const roomsWithUserData = rooms.map(room => ({ room, ...roomsData[room] })); 
         socket.emit('roomsList', roomsWithUserData);
     });
     
@@ -57,6 +57,7 @@ io.on('connection', (socket) => {
         console.log(`${users[socket.id]} disconnected`);
         delete users[socket.id];
     });
+
     socket.on('message', (msg) => {
         console.log('message: ' + msg);
         io.emit('message', msg);
@@ -84,7 +85,8 @@ io.on('connection', (socket) => {
     socket.on('leave', (room) => {
         console.log(`${users[socket.id]} leave room: ` + room);
         socket.leave(room);
-        io.to(room).emit('leave', `${users[socket.id]} has left the room`);
+        console.log(`${users[socket.id]} has left ${room}`);
+        io.to(room).emit('leave', { user: users[socket.id], room: room });
     });
 })
 

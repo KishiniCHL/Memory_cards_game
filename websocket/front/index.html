@@ -1,98 +1,149 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Memomry Cards Game</title>
-</head>
+  </head>
 
-<style>
+  <style>
     .room-content {
-        display: none;
+      display: none;
     }
-</style>
-<body>
-
+  </style>
+  <body>
     <div>
-        <div class="main-content">
-    
-            <div role="alert" id="turn-message"></div>
-    
-            <div id="user-card">
-                <div>
-    
-                    <form method="POST" id="form">
-                        <div>
-    
-                            <label for="username">Nom d'utilisateur</label>
-                            <input type="text" id="username" minlength="2" maxlength="20"
-                                placeholder="Saisir votre nom d'utilisateur" required>
-                        </div>
-                        <button id="savePseudo" type="submit">Enregistrer pseudo</button>
-                        <button id="start" type="submit">Créer un salon privée</button>
-                    </form>
-    
-                </div>
-            </div>
+      <div class="main-content" id="main-content">
+        <div role="alert" id="turn-message"></div>
 
-            <div id="rooms-card">
-                <div>Salons disponibles</div>
-                <ul id="rooms-list"></ul>
-            </div>
+        <div id="user-card">
+          <div>
+            <form method="POST" id="form">
+              <div>
+                <label for="username">Nom d'utilisateur</label>
+                <input
+                  type="text"
+                  id="username"
+                  minlength="2"
+                  maxlength="20"
+                  placeholder="Saisir votre nom d'utilisateur"
+                  required
+                />
+              </div>
+              <button id="savePseudo" type="submit">Enregistrer pseudo</button>
+              <button id="createRoomButton">Create Room</button>
+<input type="text" id="roomNameInput" placeholder="Enter room name">
+
+            </form>
+          </div>
         </div>
-        <div class="room-content">
-            <h2>Vous êtes dans la salle :<span></span></h2>
-            <div id="game-area">
-                <div id="game-board"></div>
-            </div>
+
+        <div id="rooms-card">
+          <div>Salons disponibles</div>
+          <ul id="rooms-list"></ul>
         </div>
+      </div>
+      <div class="room-content">
+        <h2>Vous êtes dans la salle :<span> </span></h2>
+        <button id="leaveButton">Leave Room</button>
+
+        <div id="game-area">
+          <div id="game-board"></div>
+        </div>
+      </div>
     </div>
+  </body>
+  <script
+    src="https://cdn.socket.io/4.7.5/socket.io.min.js"
+    integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO"
+    crossorigin="anonymous"
+  ></script>
 
-</body>
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO" crossorigin="anonymous"></script>
+  <script>
+    const socket = io();
+    let currentRoom;
 
-<script>
-    const socket = io('http://localhost:3000');
+    
+    document
+      .getElementById("form")
+      .addEventListener("submit", function (event) {
+        event.preventDefault();
+        let username = document.getElementById("username").value;
+        socket.emit("setUsername", username);
+      });
 
-    document.getElementById('form').addEventListener('submit', function(event) {
-    event.preventDefault(); 
-    var username = document.getElementById('username').value;
-    socket.emit('setUsername', username);
-    });
-
-    document.getElementById('start').addEventListener('click', function(event) {
-    socket.emit('createRoom');
-    });
-
-    socket.emit('getRooms');
-
-    socket.on('roomsList', (rooms) => {
-    const roomsList = document.getElementById('rooms-list');
-    roomsList.innerHTML = ''; 
-    rooms.forEach(({ room, creator }) => { 
-        const button = document.createElement('button');
-        button.textContent = room + ' created by ' + creator;
-
-        button.addEventListener('click', () => {
-            socket.emit('joinRoom', room);
-            document.querySelector('.main-content').style.display = 'none';
-            document.querySelector('.room-content').style.display = 'block';
+      document.getElementById('createRoomButton').addEventListener('click', function(event) {
+            event.preventDefault();
+            const roomName = document.getElementById('roomNameInput').value;
+            if (roomName) {
+                socket.emit('createRoom', roomName);
+            } else {
+                console.log('Please enter a room name');
+            }
         });
 
-        roomsList.appendChild(button);
+    //     document
+    //   .getElementById("joinButton")
+    //   .addEventListener("click", function () {
+    //     currentRoom = document.getElementById("room").value;
+    //     socket.emit("join", currentRoom);
+    //   });
+
+      document.getElementById('leaveButton').addEventListener('click', function() {
+            if (currentRoom) {
+                socket.emit('leave', currentRoom);
+                document.querySelector('.room-content').style.display = 'none';
+                document.querySelector('.main-content').style.display = 'block';
+            }
+        });
+
+///sockets
+
+    socket.on('connect', function() {
+        socket.emit('getRooms');
     });
-});
 
-socket.on('userJoined', ({ user, room }) => {
-    const message = document.createElement('p');
-    message.textContent = `${user} has joined ${room}`;
-    document.querySelector('.room-content').appendChild(message);
+    socket.on("roomsList", (rooms) => {
+      const roomsList = document.getElementById("rooms-list");
+      roomsList.innerHTML = "";
+      rooms.forEach(({ room, creator }) => {
+        const room_li = document.createElement("li");
+        room_li.textContent = room + " created by " + creator ;
 
-    document.querySelector('h2 span').textContent = room;
-});
+        const joinButton = document.createElement("button");
+        joinButton.textContent = "Join Room";
 
+        joinButton.addEventListener("click", () => {
+          currentRoom = room; 
+          socket.emit("joinRoom", room);
+          document.querySelector(".main-content").style.display = "none";
+          document.querySelector(".room-content").style.display = "block";
+        });
+
+        roomsList.appendChild(room_li);
+        roomsList.appendChild(joinButton);
+      });
+    });
+
+    socket.on("userJoined", ({ user, room }) => {
+      const message = document.createElement("p");
+      message.textContent = `${user} has joined ${room}`;
+      document.querySelector(".room-content").appendChild(message);
+
+      document.querySelector("h2 span").textContent = " " + room ;
+    });
+
+
+
+    socket.on("leave", function ({ user, room }) {
+      console.log(`${user} has left ${room}`);
+
+        const message = document.createElement("p");
+        message.textContent = `${user} has left ${room}`;
+        document.querySelector(".room-content").appendChild(message);
+
+    });
 
 </script>
-
 
 </html>
