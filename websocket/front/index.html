@@ -3,50 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Memomry Cards Game</title>
 </head>
+
+<style>
+    .room-content {
+        display: none;
+    }
+</style>
 <body>
-    <p>last message</p>
-    <p class="data"></p>
-    <input type="text" id="username" placeholder="Enter username">
-    <button onclick="setUsername()">Set Username</button>
-    <textarea name="" id="" cols="30" rows="10"></textarea>
-    <button onclick="send()">Refresh</button>
+
+    <div>
+        <div class="main-content">
+    
+            <div role="alert" id="turn-message"></div>
+    
+            <div id="user-card">
+                <div>
+    
+                    <form method="POST" id="form">
+                        <div>
+    
+                            <label for="username">Nom d'utilisateur</label>
+                            <input type="text" id="username" minlength="2" maxlength="20"
+                                placeholder="Saisir votre nom d'utilisateur" required>
+                        </div>
+                        <button id="savePseudo" type="submit">Enregistrer pseudo</button>
+                        <button id="start" type="submit">Créer un salon privée</button>
+                    </form>
+    
+                </div>
+            </div>
+
+            <div id="rooms-card">
+                <div>Salons disponibles</div>
+                <ul id="rooms-list"></ul>
+            </div>
+        </div>
+        <div class="room-content">
+            <h2>Vous êtes dans la salle :<span></span></h2>
+            <div id="game-area">
+                <div id="game-board"></div>
+            </div>
+        </div>
+    </div>
 
 </body>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO" crossorigin="anonymous"></script>
+
 <script>
-    let i = 0;
-    let room = '';
-    let socketid = '';
-    const text = document.querySelector('textarea');
-    const usernameInput = document.querySelector('#username');
     const socket = io('http://localhost:3000');
-    socket.on('connect', () => {
-        console.log('Connected');
-    });
-    socket.on('message', (data) => {
-        console.log(data);
-        document.querySelector('.data').innerText = data;
-    });
-    socket.on('disconnect', () => {
-        console.log('Disconnected');
+
+    document.getElementById('form').addEventListener('submit', function(event) {
+    event.preventDefault(); 
+    var username = document.getElementById('username').value;
+    socket.emit('setUsername', username);
     });
 
-    let setUsername = () => {
-        socket.emit('setUsername', usernameInput.value);
-    }
-
-    let send = () => {
-        i++;
-        console.log(text.value);
-        socket.emit('room', text.value, `Message room ${i}`);
-    }
-    text.addEventListener('change', (e) => {
-        socket.emit('leave', room);
-        socket.emit('join', e.target.value);
-        room = e.target.value;
+    document.getElementById('start').addEventListener('click', function(event) {
+    socket.emit('createRoom');
     });
+
+    socket.emit('getRooms');
+
+    socket.on('roomsList', (rooms) => {
+    const roomsList = document.getElementById('rooms-list');
+    roomsList.innerHTML = ''; 
+    rooms.forEach(({ room, creator }) => { 
+        const button = document.createElement('button');
+        button.textContent = room + ' created by ' + creator;
+
+        button.addEventListener('click', () => {
+            socket.emit('joinRoom', room);
+            document.querySelector('.main-content').style.display = 'none';
+            document.querySelector('.room-content').style.display = 'block';
+        });
+
+        roomsList.appendChild(button);
+    });
+});
+
+socket.on('userJoined', ({ user, room }) => {
+    const message = document.createElement('p');
+    message.textContent = `${user} has joined ${room}`;
+    document.querySelector('.room-content').appendChild(message);
+
+    document.querySelector('h2 span').textContent = room;
+});
+
 
 </script>
+
+
 </html>

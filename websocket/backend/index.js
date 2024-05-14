@@ -19,6 +19,8 @@ app.get('/', (req, res) => {
 });
 
 let users = {};
+let roomsData = {}; 
+
 
 io.on('connection', (socket) => {
     console.log('a user connected');
@@ -26,6 +28,25 @@ io.on('connection', (socket) => {
         users[socket.id] = username;
         console.log(`${username} connected`);
     });
+
+    socket.on('createRoom', (username) => {
+        socket.join(username);
+        roomsData[username] = { creator: users[socket.id] }; // Store the creator in the room data
+        console.log(`Room created: ${username}`);
+        const rooms = Array.from(io.sockets.adapter.rooms.keys())
+            .filter(room => roomsData[room]); 
+        const roomsWithUserData = rooms.map((room, index) => ({ room: 'room ' + (index + 1), ...roomsData[room] })); 
+        socket.emit('roomsList', roomsWithUserData);
+    });
+
+    socket.on('getRooms', () => {
+        const rooms = Array.from(io.sockets.adapter.rooms.keys())
+            .filter(room => roomsData[room]); 
+        const roomsWithUserData = rooms.map((room, index) => ({ room: 'room ' + (index + 1), ...roomsData[room] })); 
+        socket.emit('roomsList', roomsWithUserData);
+    });
+    
+    
     socket.on('disconnect', () => {
         console.log(`${users[socket.id]} disconnected`);
         delete users[socket.id];
@@ -45,6 +66,15 @@ io.on('connection', (socket) => {
         socket.join(room);
         io.to(room).emit('join', `${users[socket.id]} has joined the room`);
     });
+
+    socket.on('joinRoom', (room) => {
+        socket.join(room);
+
+        console.log(`${users[socket.id]} joined room: ${room}`);
+    
+        io.to(room).emit('userJoined', { user: users[socket.id], room });
+    });
+
     socket.on('leave', (room) => {
         console.log(`${users[socket.id]} leave room: ` + room);
         socket.leave(room);
