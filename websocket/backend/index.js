@@ -26,7 +26,7 @@ app.get('/', (req, res) => {
 
 let users = {};
 let roomsData = {}; 
-
+const roomUserCount = {};
 
 io.on('connection', (socket) => {
     console.log('a user connected');
@@ -43,12 +43,19 @@ io.on('connection', (socket) => {
             .filter(room => roomsData[room]); 
         const roomsWithUserData = rooms.map(room => ({ room, ...roomsData[room] })); 
         socket.emit('roomsList', roomsWithUserData);
+
+        updateRoomStatus();
+
     });
     
     socket.on('getRooms', () => {
         const rooms = Array.from(io.sockets.adapter.rooms.keys())
             .filter(room => roomsData[room]); 
-        const roomsWithUserData = rooms.map(room => ({ room, ...roomsData[room] })); 
+        const roomsWithUserData = rooms.map(room => ({
+            room,
+            ...roomsData[room],
+            isFull: roomUserCount[room] >= 2 // Add the room full status
+        })); 
         socket.emit('roomsList', roomsWithUserData);
     });
     
@@ -75,19 +82,44 @@ io.on('connection', (socket) => {
     });
 
     socket.on('joinRoom', (room) => {
-        socket.join(room);
+        if (roomUserCount[room] && roomUserCount[room] >= 2) {
+            socket.emit('roomFull');
+        } else {
+            socket.join(room);
+            if (!roomUserCount[room]) {
+                roomUserCount[room] = 0;
+            }
+            roomUserCount[room]++; 
+            socket.join(room);
 
-        console.log(`${users[socket.id]} joined room: ${room}`);
-    
-        io.to(room).emit('userJoined', { user: users[socket.id], room });
+            console.log(`${users[socket.id]} joined room: ${room}`);
+        
+            io.to(room).emit('userJoined', { user: users[socket.id], room });
+        }
     });
 
-    socket.on('leave', (room) => {
+        socket.on('leave', (room) => {
+            socket.leave(room);
+            roomUserCount[room]--;
+
         console.log(`${users[socket.id]} leave room: ` + room);
         socket.leave(room);
         console.log(`${users[socket.id]} has left ${room}`);
         io.to(room).emit('leave', { user: users[socket.id], room: room });
-    });
+        updateRoomStatus();
+
+        });
+
+        function updateRoomStatus() {
+            const rooms = Array.from(io.sockets.adapter.rooms.keys())
+                .filter(room => roomsData[room]); 
+            const roomsWithUserData = rooms.map(room => ({
+                room,
+                ...roomsData[room],
+                isFull: roomUserCount[room] >= 2 
+            })); 
+            io.emit('roomsList', roomsWithUserData); 
+        }
 })
 
 server.listen(PORT, () => {

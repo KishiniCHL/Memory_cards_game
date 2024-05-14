@@ -82,12 +82,6 @@
             }
         });
 
-    //     document
-    //   .getElementById("joinButton")
-    //   .addEventListener("click", function () {
-    //     currentRoom = document.getElementById("room").value;
-    //     socket.emit("join", currentRoom);
-    //   });
 
       document.getElementById('leaveButton').addEventListener('click', function() {
             if (currentRoom) {
@@ -102,28 +96,39 @@
     socket.on('connect', function() {
         socket.emit('getRooms');
     });
+    
 
-    socket.on("roomsList", (rooms) => {
-      const roomsList = document.getElementById("rooms-list");
-      roomsList.innerHTML = "";
-      rooms.forEach(({ room, creator }) => {
-        const room_li = document.createElement("li");
-        room_li.textContent = room + " created by " + creator ;
+    socket.on('roomsList', (rooms) => {
+    const roomsList = document.getElementById('rooms-list');
+    roomsList.innerHTML = ''; 
+    rooms.forEach(({ room, creator, isFull }) => { 
+        const creator_details_room = document.createElement('li');
+        creator_details_room.textContent = room + ' created by ' + creator;
 
-        const joinButton = document.createElement("button");
-        joinButton.textContent = "Join Room";
+        const joinButton = document.createElement('button');
+        joinButton.textContent = 'Join Room';
 
-        joinButton.addEventListener("click", () => {
-          currentRoom = room; 
-          socket.emit("joinRoom", room);
-          document.querySelector(".main-content").style.display = "none";
-          document.querySelector(".room-content").style.display = "block";
+        if (isFull) {
+            joinButton.disabled = true;
+            const space = document.createElement('span');
+            space.textContent = ' (Full)';
+            creator_details_room.appendChild(space);
+
+        }
+
+        joinButton.addEventListener('click', () => {
+            if (!isFull) {
+                currentRoom = room; 
+                socket.emit('joinRoom', room);
+                document.querySelector('.main-content').style.display = 'none';
+                document.querySelector('.room-content').style.display = 'block';
+            }
         });
 
-        roomsList.appendChild(room_li);
+        roomsList.appendChild(creator_details_room);
         roomsList.appendChild(joinButton);
-      });
     });
+});
 
     socket.on("userJoined", ({ user, room }) => {
       const message = document.createElement("p");
@@ -133,7 +138,11 @@
       document.querySelector("h2 span").textContent = " " + room ;
     });
 
-
+    socket.on('roomFull', () => {
+    alert('The room is full');
+    document.querySelector('.main-content').style.display = 'block';
+    document.querySelector('.room-content').style.display =  'none' ;
+});
 
     socket.on("leave", function ({ user, room }) {
       console.log(`${user} has left ${room}`);
