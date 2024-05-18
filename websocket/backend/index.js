@@ -54,7 +54,7 @@ io.on('connection', (socket) => {
         const roomsWithUserData = rooms.map(room => ({
             room,
             ...roomsData[room],
-            isFull: roomUserCount[room] >= 2 // Add the room full status
+            isFull: roomUserCount[room] >= 2 
         })); 
         socket.emit('roomsList', roomsWithUserData);
     });
@@ -95,31 +95,48 @@ io.on('connection', (socket) => {
             console.log(`${users[socket.id]} joined room: ${room}`);
         
             io.to(room).emit('userJoined', { user: users[socket.id], room });
+
+            //quand il y a 2 joueurs dans la room
+            if (roomUserCount[room] === 2) {
+                io.to(room).emit('roomIsFull'); 
+            }
+            
+            socket.on('joinRoom', (room) => {
+                if (roomUserCount[room] === 2) {
+                    socket.emit('roomFullAndCannotJoin');
+                    socket.leave(room);
+                }
+            });
         }
     });
 
-        socket.on('leave', (room) => {
-            socket.leave(room);
-            roomUserCount[room]--;
+
+    socket.on('gameStarted', (room) => {
+        io.to(room).emit('gameStarted');
+    });
+
+    socket.on('leave', (room) => {
+        socket.leave(room);
+        roomUserCount[room]--;
 
         console.log(`${users[socket.id]} leave room: ` + room);
         socket.leave(room);
         console.log(`${users[socket.id]} has left ${room}`);
         io.to(room).emit('leave', { user: users[socket.id], room: room });
         updateRoomStatus();
+    });
 
-        });
-
-        function updateRoomStatus() {
-            const rooms = Array.from(io.sockets.adapter.rooms.keys())
-                .filter(room => roomsData[room]); 
-            const roomsWithUserData = rooms.map(room => ({
-                room,
-                ...roomsData[room],
-                isFull: roomUserCount[room] >= 2 
-            })); 
-            io.emit('roomsList', roomsWithUserData); 
-        }
+    //le statut de la room
+    function updateRoomStatus() {
+        const rooms = Array.from(io.sockets.adapter.rooms.keys())
+            .filter(room => roomsData[room]); 
+        const roomsWithUserData = rooms.map(room => ({
+            room,
+            ...roomsData[room],
+            isFull: roomUserCount[room] >= 2 
+        })); 
+        io.emit('roomsList', roomsWithUserData); 
+    }
 })
 
 server.listen(PORT, () => {

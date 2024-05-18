@@ -1,158 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Memomry Cards Game</title>
-  </head>
-
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memory Cards Game</title>
   <style>
     .room-content {
       display: none;
     }
   </style>
-  <body>
-    <div>
-      <div class="main-content" id="main-content">
-        <div role="alert" id="turn-message"></div>
-
-        <div id="user-card">
-          <div>
-            <form method="POST" id="form">
-              <div>
-                <label for="username">Nom d'utilisateur</label>
-                <input
-                  type="text"
-                  id="username"
-                  minlength="2"
-                  maxlength="20"
-                  placeholder="Saisir votre nom d'utilisateur"
-                  required
-                />
-              </div>
-              <button id="savePseudo" type="submit">Enregistrer pseudo</button>
-              <button id="createRoomButton">Create Room</button>
-<input type="text" id="roomNameInput" placeholder="Enter room name">
-
-            </form>
-          </div>
-        </div>
-
-        <div id="rooms-card">
-          <div>Salons disponibles</div>
-          <ul id="rooms-list"></ul>
+</head>
+<body>
+  <div>
+    <div class="main-content" id="main-content">
+      <div role="alert" id="turn-message"></div>
+      <div id="user-card">
+        <div>
+          <form method="POST" id="form">
+            <div>
+              <label for="username">Nom d'utilisateur</label>
+              <input type="text" id="username" minlength="2" maxlength="20" placeholder="Saisir votre nom d'utilisateur" required>
+            </div>
+            <button id="savePseudo" type="submit">Enregistrer pseudo</button>
+            <button id="createRoomButton">Création d'une salle</button>
+            <input type="text" id="roomNameInput" placeholder="Nom de la salle">
+          </form>
         </div>
       </div>
-      <div class="room-content">
-        <h2>Vous êtes dans la salle :<span> </span></h2>
-        <button id="leaveButton">Leave Room</button>
-
-        <div id="game-area">
-          <div id="game-board"></div>
-        </div>
+      <div id="rooms-card">
+        <div>Salons disponibles</div>
+        <ul id="rooms-list"></ul>
       </div>
     </div>
-  </body>
-  <script
-    src="https://cdn.socket.io/4.7.5/socket.io.min.js"
-    integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO"
-    crossorigin="anonymous"
-  ></script>
-
+    <div class="room-content">
+      <h2>Vous êtes dans la salle :<span> </span></h2>
+      <button id="leaveButton">Quitter la salle</button>
+      <div id="game-area">
+        <div id="game-board"></div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO" crossorigin="anonymous"></script>
   <script>
     const socket = io();
     let currentRoom;
 
-    
-    document
-      .getElementById("form")
-      .addEventListener("submit", function (event) {
-        event.preventDefault();
-        let username = document.getElementById("username").value;
-        socket.emit("setUsername", username);
-      });
-
-      document.getElementById('createRoomButton').addEventListener('click', function(event) {
-            event.preventDefault();
-            const roomName = document.getElementById('roomNameInput').value;
-            if (roomName) {
-                socket.emit('createRoom', roomName);
-            } else {
-                console.log('Please enter a room name');
-            }
-        });
-
-
-      document.getElementById('leaveButton').addEventListener('click', function() {
-            if (currentRoom) {
-                socket.emit('leave', currentRoom);
-                document.querySelector('.room-content').style.display = 'none';
-                document.querySelector('.main-content').style.display = 'block';
-            }
-        });
-
-///sockets
-
-    socket.on('connect', function() {
-        socket.emit('getRooms');
+    //Enregistrement du username de l'utilisateur
+    document.getElementById("form").addEventListener("submit", function (event) {
+      event.preventDefault();
+      let username = document.getElementById("username").value;
+      socket.emit("setUsername", username);
     });
-    
+
+    //creation d'une salle de jeu
+    document.getElementById('createRoomButton').addEventListener('click', function(event) {
+      event.preventDefault();
+      const roomName = document.getElementById('roomNameInput').value;
+      if (roomName) {
+        socket.emit('createRoom', roomName);
+      } else {
+        console.log('Please enter a room name');
+      }
+    });
+
+    //leave la salle
+    document.getElementById('leaveButton').addEventListener('click', function() {
+      if (currentRoom) {
+        socket.emit('leave', currentRoom);
+        document.querySelector('.room-content').style.display = 'none';
+        document.querySelector('.main-content').style.display = 'block';
+      }
+    });
+
+    //recuperation des salles de jeu quand quelquun accede a la page
+    socket.on('connect', function() {
+      socket.emit('getRooms');
+    });
 
     socket.on('roomsList', (rooms) => {
-    const roomsList = document.getElementById('rooms-list');
-    roomsList.innerHTML = ''; 
-    rooms.forEach(({ room, creator, isFull }) => { 
+      const roomsList = document.getElementById('rooms-list');
+      roomsList.innerHTML = ''; 
+
+      //display des room avec createur et si c'est full ou non
+      rooms.forEach(({ room, creator, isFull }) => { 
         const creator_details_room = document.createElement('li');
-        creator_details_room.textContent = room + ' created by ' + creator;
+        creator_details_room.textContent = room + ' crée par ' + creator;
 
         const joinButton = document.createElement('button');
-        joinButton.textContent = 'Join Room';
+        joinButton.textContent = 'Rejoindre la salle';
 
         if (isFull) {
-            joinButton.disabled = true;
-            const space = document.createElement('span');
-            space.textContent = ' (Full)';
-            creator_details_room.appendChild(space);
-
+          joinButton.disabled = true;
+          const space = document.createElement('span');
+          space.textContent = ' (Full)';
+          creator_details_room.appendChild(space);
         }
 
+        //join la salle
         joinButton.addEventListener('click', () => {
-            if (!isFull) {
-                currentRoom = room; 
-                socket.emit('joinRoom', room);
-                document.querySelector('.main-content').style.display = 'none';
-                document.querySelector('.room-content').style.display = 'block';
-            }
+
+          //si la salle n'est pas pleine
+          if (!isFull) {
+            currentRoom = room; 
+            socket.emit('joinRoom', room);
+            document.querySelector('.main-content').style.display = 'none';
+            document.querySelector('.room-content').style.display = 'block';
+
+            socket.emit('roomJoined', room);
+          } else {
+            alert('La salle est pleine !');
+          }
         });
 
         roomsList.appendChild(creator_details_room);
         roomsList.appendChild(joinButton);
+      });
     });
-});
 
+    //quand un utilisateur rejoint une salle
     socket.on("userJoined", ({ user, room }) => {
+      document.querySelector('.main-content').style.display = 'none';
+      document.querySelector('.room-content').style.display = 'block';
+
       const message = document.createElement("p");
-      message.textContent = `${user} has joined ${room}`;
+      message.textContent = `${user} a rejoint ${room}`;
       document.querySelector(".room-content").appendChild(message);
 
-      document.querySelector("h2 span").textContent = " " + room ;
+      document.querySelector("h2 span").textContent = " " + room;
     });
 
-    socket.on('roomFull', () => {
-    alert('The room is full');
-    document.querySelector('.main-content').style.display = 'block';
-    document.querySelector('.room-content').style.display =  'none' ;
-});
+    //la salle est pleine contenu
+    socket.on('roomIsFull', () => {
+      console.log('room full');
+      document.querySelector('.main-content').style.display = 'none';
+      document.querySelector('.room-content').style.display = 'block';
 
+      const startButton = document.createElement('button');
+      startButton.textContent = 'Commencer la partie';
+      startButton.id = 'start-game-button'; 
+      document.querySelector('.room-content').appendChild(startButton);
+
+      startButton.addEventListener('click', () => {
+        console.log('cool click sur le start button');
+        socket.emit('gameStarted', currentRoom);
+      });
+    });
+
+    //la salle est pleine et on ne peut pas la rejoindre 
+    socket.on('roomFullAndCannotJoin', () => {
+      alert('La salle que vous souhaitez rejoindre est pleine !');
+      document.querySelector('.main-content').style.display = 'block';
+      document.querySelector('.room-content').style.display = 'none';
+    });
+
+    //quand un utilisateur quitte la salle
     socket.on("leave", function ({ user, room }) {
-      console.log(`${user} has left ${room}`);
+      console.log(`${user} a quitté la salle ${room}`);
 
-        const message = document.createElement("p");
-        message.textContent = `${user} has left ${room}`;
-        document.querySelector(".room-content").appendChild(message);
-
+      const message = document.createElement("p");
+      message.textContent = `${user} a quitté la salle : ${room}`;
+      document.querySelector(".room-content").appendChild(message);
     });
 
-</script>
+    //quand le jeu commence display pour les joueurs
+    socket.on('gameStarted', () => {
+      const p = document.createElement('p');
+      p.textContent = 'Hello c le jeu qui sera ici';
 
+      document.querySelector('.room-content').appendChild(p);
+    });
+  </script>
+</body>
 </html>
