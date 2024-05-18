@@ -83,7 +83,9 @@ io.on('connection', (socket) => {
 
     socket.on('joinRoom', (room) => {
         if (roomUserCount[room] && roomUserCount[room] >= 2) {
-            socket.emit('roomFull');
+            socket.emit('roomFullAndCannotJoin');
+            // Return early to prevent the user from joining the room
+            return;
         } else {
             socket.join(room);
             if (!roomUserCount[room]) {
@@ -95,6 +97,12 @@ io.on('connection', (socket) => {
             console.log(`${users[socket.id]} joined room: ${room}`);
         
             io.to(room).emit('userJoined', { user: users[socket.id], room });
+
+            // Check if the room is full after a user joins
+            if (roomUserCount[room] === 2) {
+                // Emit the 'roomFull' event to all users in the room
+                io.to(room).emit('roomFull');
+            }
         }
     });
 
@@ -120,6 +128,16 @@ io.on('connection', (socket) => {
             })); 
             io.emit('roomsList', roomsWithUserData); 
         }
+
+
+        socket.on('startGame', (room) => {
+            if (roomUserCount[room] && roomUserCount[room] === 2) {
+              io.to(room).emit('gameStarted');
+              console.log(`Game started in room: ${room}`);
+            } else {
+              socket.emit('error', 'The room is not full yet');
+            }
+          });
 })
 
 server.listen(PORT, () => {

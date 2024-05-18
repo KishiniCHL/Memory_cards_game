@@ -46,6 +46,7 @@
       <div class="room-content">
         <h2>Vous êtes dans la salle :<span> </span></h2>
         <button id="leaveButton">Leave Room</button>
+        <button id="startGameButton" style="display: none;">Start Game</button>
 
         <div id="game-area">
           <div id="game-board"></div>
@@ -63,7 +64,7 @@
     const socket = io();
     let currentRoom;
 
-    
+
     document
       .getElementById("form")
       .addEventListener("submit", function (event) {
@@ -138,11 +139,11 @@
       document.querySelector("h2 span").textContent = " " + room ;
     });
 
-    socket.on('roomFull', () => {
-    alert('The room is full');
-    document.querySelector('.main-content').style.display = 'block';
-    document.querySelector('.room-content').style.display =  'none' ;
-});
+//     socket.on('roomFull', () => {
+//     alert('The room is full');
+//     document.querySelector('.main-content').style.display = 'block';
+//     document.querySelector('.room-content').style.display =  'none' ;
+// });
 
     socket.on("leave", function ({ user, room }) {
       console.log(`${user} has left ${room}`);
@@ -151,6 +152,26 @@
         message.textContent = `${user} has left ${room}`;
         document.querySelector(".room-content").appendChild(message);
 
+    });
+
+    // Game logic
+    const startGameButton = document.getElementById('startGameButton');
+
+    startGameButton.addEventListener('click', function() {
+        if (currentRoom) {
+        socket.emit('startGame', currentRoom);
+        }
+    });
+
+    socket.on('roomFull', () => {
+        startGameButton.style.display = 'block';
+    });
+    socket.on('roomFullAndCannotJoin', () => {
+        alert('The room is full');
+    });
+
+    socket.on('gameStarted', () => {
+        // Start the game here
     });
 
 </script>
