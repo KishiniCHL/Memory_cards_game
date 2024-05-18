@@ -8,6 +8,27 @@
     .room-content {
       display: none;
     }
+    #game-board {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            margin-top: 50px;
+        }
+        .memory-card {
+            background-color: #204051;
+            width: calc(25% - 10px);
+            height: 150px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        .invisible {
+        visibility: hidden;
+    }
   </style>
 </head>
 <body>
@@ -162,13 +183,79 @@
       document.querySelector(".room-content").appendChild(message);
     });
 
-    //quand le jeu commence display pour les joueurs
+    // une fois le bouton start game cliqué
     socket.on('gameStarted', () => {
-      const p = document.createElement('p');
-      p.textContent = 'Hello c le jeu qui sera ici';
+      // const p = document.createElement('p');
+      // p.textContent = 'Hello c le jeu qui sera ici';
+      // document.querySelector('.room-content').appendChild(p);
 
-      document.querySelector('.room-content').appendChild(p);
+      // Rendre le bouton startButton invisible
+    const startButton = document.getElementById('start-game-button');
+    if (startButton) {
+      startButton.style.display = 'none';
+    }
+
+      generateMemoryCards(); // Générer les cartes de mémoire
     });
+
+
+    // création du jeu de mémoire
+
+    let flippedCards = []; // Cartes retournées
+
+    function generateMemoryCards() {
+      const gameBoard = document.getElementById('game-board');
+      const cardValues = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']; // Paires de valeurs de cartes
+
+      // Mélanger les valeurs de cartes
+      cardValues.sort(() => Math.random() - 0.5);
+
+      for (let i = 0; i < cardValues.length; i++) {
+          const card = document.createElement('div');
+          card.classList.add('memory-card');
+          card.dataset.value = cardValues[i];
+          card.textContent = card.dataset.value; // Afficher initialement la valeur de la carte
+          card.addEventListener('click', flipCard);
+          gameBoard.appendChild(card);
+      }
+
+      // Retourner toutes les cartes face cachée après 4 secondes
+      setTimeout(() => {
+          const cards = document.querySelectorAll('.memory-card');
+          cards.forEach(card => {
+              card.textContent = '🎴'; // Emoji pour une carte face cachée
+          });
+      }, 4000);
+    }
+
+    // Fonction pour retourner une carte
+    function flipCard(event) {
+        const card = event.target;
+        card.textContent = card.dataset.value; // Afficher la valeur de la carte
+        flippedCards.push(card); // Ajouter la carte aux cartes retournées
+
+        // Si deux cartes ont été retournées, vérifier si elles correspondent
+        if (flippedCards.length === 2) {
+            if (flippedCards[0].dataset.value === flippedCards[1].dataset.value) {
+                // Les cartes correspondent, les rendre invisibles après un délai
+                setTimeout(() => {
+                    flippedCards[0].classList.add('invisible');
+                    flippedCards[1].classList.add('invisible');
+                    flippedCards = [];
+                }, 1000);
+            } else {
+                // Les cartes ne correspondent pas, les retourner face cachée après un délai
+                setTimeout(() => {
+                    flippedCards[0].textContent = '🎴';
+                    flippedCards[1].textContent = '🎴';
+                    flippedCards = [];
+                }, 1000);
+            }
+        }
+
+                // Envoyer un événement au serveur pour indiquer qu'une carte a été retournée
+        socket.emit('cardFlipped', { value: card.dataset.value, index: Array.from(gameBoard.children).indexOf(card) });
+    }
   </script>
 </body>
 </html>
