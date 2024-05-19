@@ -1,0 +1,24 @@
+.room-content {
+    display: none;
+  }
+  #game-board {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: space-around;
+          margin-top: 50px;
+      }
+      .memory-card {
+          background-color: #204051;
+          width: calc(25% - 10px);
+          height: 150px;
+          margin-bottom: 10px;
+          border-radius: 5px;
+          color: #fff;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          cursor: pointer;
+      }
+      .invisible {
+      visibility: hidden;
+  }
