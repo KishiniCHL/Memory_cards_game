@@ -5,32 +5,57 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Memory Cards Game</title>
   <link rel="stylesheet" href="./style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cute+Font&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
 </head>
 <body>
+  <nav class="navbar">
+    <h1 class="navbar-title">Memory Cards Game </h1>
+    <p class="navbar-description">Testez votre rapidité et votre mémoire !</p>
+  </nav>
+
   <div>
     <div class="main-content" id="main-content">
       <div role="alert" id="turn-message"></div>
       <div id="user-card">
-        <div>
+        <div class="display_flex_center">
           <form method="POST" id="form">
-            <div>
-              <label for="username">Nom d'utilisateur</label>
-              <input type="text" id="username" minlength="2" maxlength="20" placeholder="Saisir votre nom d'utilisateur" required>
+            <div class="input__container">
+              <div class="field_container">
+                <label class="input__label" for="username">Pseudo :</label>
+                <input type="text" id="username" minlength="2" maxlength="20" class="input" placeholder="Saisir votre pseudo" required>
+                <button id="savePseudo" type="submit" class="input button_style">Enregistrer</button>
+                <p class="input__description">Quel sera votre pseudo marrant</p>
+              </div>
+              <div class="field_container">
+                <label class="input__label" for="username">Salle :</label>
+                <input type="text" id="roomNameInput" class="input" placeholder="Nom de la salle">
+                <button id="createRoomButton" class="input button_style">Créer la salle</button>
+                <p class="input__description">Une salle cool</p>
+              </div>
             </div>
-            <button id="savePseudo" type="submit">Enregistrer pseudo</button>
-            <button id="createRoomButton">Création d'une salle</button>
-            <input type="text" id="roomNameInput" placeholder="Nom de la salle">
+
           </form>
         </div>
       </div>
-      <div id="rooms-card">
-        <div>Salons disponibles</div>
-        <ul id="rooms-list"></ul>
+
+      <hr class="separateur">
+
+
+      <div class="rooms">
+        <div id="rooms-card" >
+          <p class="salon-dispo">Salons disponibles : </p>
+          <div>
+            <ul id="rooms-list"></ul>
+          </div>
+        </div>
       </div>
+      
     </div>
     <div class="room-content">
-      <h2>Vous êtes dans la salle :<span> </span></h2>
-      <button id="leaveButton">Quitter la salle</button>
+      <p class="title2">Vous êtes dans la salle :<span> </span></p>
+      <button id="leaveButton" class="input button_style width200 leave">Quitter la salle</button>
       <div id="game-area">
         <div id="rules">
           <h3>Règles du jeu</h3>
@@ -47,6 +72,11 @@
       </div>
     </div>
   </div>
+
+  <footer class="footer">
+    <p>© 2024 - Memory Cards Game</p>
+    <p>By HL and 16 with Socket.io</p>
+  </footer>
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO" crossorigin="anonymous"></script>
   <script src="./app.js"></script>
 </body>

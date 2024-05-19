@@ -54,8 +54,12 @@ socket.on("roomsList", (rooms) => {
     const creator_details_room = document.createElement("li");
     creator_details_room.textContent = room + " créée par " + creator;
 
+    let div = document.createElement('div');
+    div.className = 'container-salon';
+
     const joinButton = document.createElement("button");
     joinButton.textContent = "Rejoindre la salle";
+    joinButton.className = "input button_style";
 
     if (isFull) {
       joinButton.disabled = true;
@@ -79,8 +83,9 @@ socket.on("roomsList", (rooms) => {
       }
     });
 
-    roomsList.appendChild(creator_details_room);
-    roomsList.appendChild(joinButton);
+    div.appendChild(creator_details_room);
+    div.appendChild(joinButton);
+    roomsList.appendChild(div);
   });
 });
 
@@ -93,7 +98,7 @@ socket.on("userJoined", ({ user, room }) => {
   message.textContent = `${user} a rejoint ${room}`;
   document.querySelector(".room-content").appendChild(message);
 
-  document.querySelector("h2 span").textContent = " " + room;
+  document.querySelector("p span").textContent = " " + room;
 });
 
 socket.on("playerJoinedRoom", function () {
@@ -110,6 +115,7 @@ socket.on("roomIsFull", () => {
   const startButton = document.createElement("button");
   startButton.textContent = "Commencer la partie";
   startButton.id = "start-game-button";
+  startButton.classList.add("input", "button_style", "width200"); // Add classes here
   document.querySelector(".room-content").appendChild(startButton);
 
   startButton.addEventListener("click", () => {
@@ -177,7 +183,7 @@ socket.on("gameStarted", (cardValues) => {
       // Faire disparaître le message après 3 secondes
       setTimeout(() => {
         countdownElement.style.display = "none";
-      }, 3000);
+      }, 1000);
     }
   }, 1000);
 });
