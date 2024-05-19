@@ -10,6 +10,16 @@ document.getElementById("form").addEventListener("submit", function (event) {
   socket.emit("setUsername", username);
 });
 
+socket.on('usernameSet', (username) => {
+  if (username) {
+      let span = document.querySelector(".pseudo_user");
+      let div = document.querySelector("#usernameDisplay");
+
+      span.textContent = username;
+      div.style.display = "block";
+  }
+});
+
 //creation d'une salle de jeu
 document.getElementById("createRoomButton").addEventListener("click", function (event) {
   event.preventDefault();

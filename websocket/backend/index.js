@@ -36,6 +36,7 @@ io.on('connection', (socket) => {
     socket.on('setUsername', (username) => {
         users[socket.id] = username;
         console.log(`${username} connected`);
+        socket.emit('usernameSet', username);
     });
 
     socket.on('createRoom', (roomName) => {
