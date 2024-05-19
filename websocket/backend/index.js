@@ -98,6 +98,8 @@ io.on('connection', (socket) => {
         
             io.to(room).emit('userJoined', { user: users[socket.id], room });
 
+            io.to(room).emit('playerJoinedRoom');
+
             //quand il y a 2 joueurs dans la room
             if (roomUserCount[room] === 2) {
                 io.to(room).emit('roomIsFull'); 

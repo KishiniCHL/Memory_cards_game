@@ -22,3 +22,7 @@
       .invisible {
       visibility: hidden;
   }
+
+  #rules {
+    display: none;
+  }

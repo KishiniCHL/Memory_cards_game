@@ -13,9 +13,17 @@ const socket = io();
       event.preventDefault();
       const roomName = document.getElementById('roomNameInput').value;
       if (roomName) {
+        // Créer la salle
         socket.emit('createRoom', roomName);
+    
+        // Rejoindre la salle automatiquement
+        socket.emit('joinRoom', roomName);
+        document.querySelector('.main-content').style.display = 'none';
+        document.querySelector('.room-content').style.display = 'block';
+    
+        socket.emit('roomJoined', roomName);
       } else {
-        console.log('Please enter a room name');
+        console.log('Veuillez entrer un nom de salle');
       }
     });
 
@@ -85,6 +93,13 @@ const socket = io();
       document.querySelector("h2 span").textContent = " " + room;
     });
 
+
+    socket.on('playerJoinedRoom', function() {
+      // Show the rules when a player joins a room
+      document.getElementById('rules').style.display = 'block';
+    });
+
+
     //la salle est pleine contenu
     socket.on('roomIsFull', () => {
       console.log('room full');
@@ -122,8 +137,10 @@ const socket = io();
     socket.on('gameStarted', (cardValues) => {
       // Rendre le bouton startButton invisible
       const startButton = document.getElementById('start-game-button');
+      const RemoveRules = document.getElementById('rules');
       if (startButton) {
         startButton.style.display = 'none';
+        RemoveRules.style.display = 'none';
       }
 
       generateMemoryCards(cardValues); // Générer les cartes de mémoire avec les valeurs reçues
