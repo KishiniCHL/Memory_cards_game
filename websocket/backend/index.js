@@ -115,6 +115,8 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Envoyer cardValues au client lorsqu'il se connecte
+    socket.emit('cardValues', cardValues);
 
     socket.on('gameStarted', (room) => {
         cardValues.sort(() => Math.random() - 0.5); // Mélanger les valeurs de cartes
@@ -127,23 +129,30 @@ io.on('connection', (socket) => {
         socket.broadcast.to(room).emit('cardFlipped', { index });
     });
 
-    socket.on('pairFound', ({ player, room }) => {
+    socket.on('pairFound', ({ player, indices, room }) => {
         if (!pairCounts[room]) {
             pairCounts[room] = { player1: 0, player2: 0 };
         }
         
-        // Augmenter le compteur de paires pour le joueur
+        // Increase the pair counter for the player
         pairCounts[room][player]++;
         console.log(`${player} found a pair. Total pairs: ${pairCounts[room][player]}`);
     
-        // Vérifiez si le joueur a trouvé toutes les paires
+        // Check if the player has found all pairs
         if (pairCounts[room][player] === cardValues.length / 2) {
             console.log(`${player} has found all pairs and won the game!`);
             io.to(room).emit('gameOver', { winner: player });
         }
+    
+        // Emit the pairFound event to all other players in the same room
+        socket.broadcast.to(room).emit('pairFound', { player, indices });
     });
     
-    
+    // The event handler for when the cards do not match
+    socket.on('cardsDoNotMatch', ({ indices, room }) => {
+        // Emit an event to all other players in the same room
+        socket.broadcast.to(room).emit('cardsDoNotMatch', { indices });
+    });
 
     socket.on('leave', (room) => {
         socket.leave(room);
