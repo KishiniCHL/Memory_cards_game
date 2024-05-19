@@ -134,6 +134,9 @@ socket.on("leave", function ({ user, room }) {
   document.querySelector(".room-content").appendChild(message);
 });
 
+let startTime; // Variable pour stocker l'heure de début de la partie
+let timerInterval; // Variable pour stocker l'intervalle du chronomètre
+
 // une fois le bouton start game cliqué
 socket.on("gameStarted", (cardValues) => {
   // Rendre le bouton startButton invisible
@@ -157,6 +160,18 @@ socket.on("gameStarted", (cardValues) => {
       clearInterval(countdownInterval);
       countdownElement.textContent = "C'est parti !";
       console.log("Starting game..."); // Ajout d'un console.log pour vérifier que le jeu est démarré
+
+        // Enregistrer l'heure de début de la partie
+        startTime = Date.now();
+
+        // Créer et afficher le chronomètre
+        const timerElement = document.createElement('p');
+        timerElement.id = 'timer';
+        document.querySelector('.room-content').appendChild(timerElement);
+
+        // Mettre à jour le chronomètre toutes les secondes
+        timerInterval = setInterval(updateTimer, 1000);
+
       generateMemoryCards(cardValues); // Générer les cartes de mémoire avec les valeurs reçues
 
       // Faire disparaître le message après 3 secondes
@@ -166,6 +181,15 @@ socket.on("gameStarted", (cardValues) => {
     }
   }, 1000);
 });
+
+// Fonction pour mettre à jour le chronomètre
+function updateTimer() {
+  const timerElement = document.getElementById('timer');
+  const elapsedTime = Date.now() - startTime;
+  const seconds = Math.floor(elapsedTime / 1000) % 60;
+  const minutes = Math.floor(elapsedTime / (1000 * 60));
+  timerElement.textContent = `Temps écoulé : ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+}
 
 // Événement 'pairFound'
 socket.on('pairFound', ({ player }) => {

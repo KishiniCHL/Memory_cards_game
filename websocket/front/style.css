@@ -1,5 +1,6 @@
 .room-content {
     display: none;
+    position: relative;
   }
   #game-board {
           display: flex;
@@ -25,4 +26,10 @@
 
   #rules {
     display: none;
+  }
+
+  #timer {
+    position: absolute;
+    top: 0;
+    right: 50px;
   }
