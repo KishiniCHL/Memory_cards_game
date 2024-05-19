@@ -105,7 +105,7 @@
       //display des room avec createur et si c'est full ou non
       rooms.forEach(({ room, creator, isFull }) => { 
         const creator_details_room = document.createElement('li');
-        creator_details_room.textContent = room + ' crée par ' + creator;
+        creator_details_room.textContent = room + ' créée par ' + creator;
 
         const joinButton = document.createElement('button');
         joinButton.textContent = 'Rejoindre la salle';
@@ -184,31 +184,22 @@
     });
 
     // une fois le bouton start game cliqué
-    socket.on('gameStarted', () => {
-      // const p = document.createElement('p');
-      // p.textContent = 'Hello c le jeu qui sera ici';
-      // document.querySelector('.room-content').appendChild(p);
-
+    socket.on('gameStarted', (cardValues) => {
       // Rendre le bouton startButton invisible
-    const startButton = document.getElementById('start-game-button');
-    if (startButton) {
-      startButton.style.display = 'none';
-    }
+      const startButton = document.getElementById('start-game-button');
+      if (startButton) {
+        startButton.style.display = 'none';
+      }
 
-      generateMemoryCards(); // Générer les cartes de mémoire
+      generateMemoryCards(cardValues); // Générer les cartes de mémoire avec les valeurs reçues
     });
 
 
     // création du jeu de mémoire
-
+    const gameBoard = document.getElementById('game-board');
     let flippedCards = []; // Cartes retournées
 
-    function generateMemoryCards() {
-      const gameBoard = document.getElementById('game-board');
-      const cardValues = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']; // Paires de valeurs de cartes
-
-      // Mélanger les valeurs de cartes
-      cardValues.sort(() => Math.random() - 0.5);
+    function generateMemoryCards(cardValues) {
 
       for (let i = 0; i < cardValues.length; i++) {
           const card = document.createElement('div');
@@ -232,7 +223,14 @@
     function flipCard(event) {
         const card = event.target;
         card.textContent = card.dataset.value; // Afficher la valeur de la carte
-        flippedCards.push(card); // Ajouter la carte aux cartes retournées
+        
+        // Si moins de deux cartes sont actuellement retournées, ajouter la carte aux cartes retournées et émettre l'événement cardFlipped
+        if (flippedCards.length < 2) {
+            flippedCards.push(card); // Ajouter la carte aux cartes retournées
+
+            // Envoyer un événement au serveur pour indiquer qu'une carte a été retournée
+            socket.emit('cardFlipped', { index: Array.from(gameBoard.children).indexOf(card), value: card.dataset.value });
+        }
 
         // Si deux cartes ont été retournées, vérifier si elles correspondent
         if (flippedCards.length === 2) {
@@ -253,9 +251,16 @@
             }
         }
 
-                // Envoyer un événement au serveur pour indiquer qu'une carte a été retournée
-        socket.emit('cardFlipped', { value: card.dataset.value, index: Array.from(gameBoard.children).indexOf(card) });
+        // Envoyer un événement au serveur pour indiquer qu'une carte a été retournée
+        //socket.emit('cardFlipped', { index: Array.from(gameBoard.children).indexOf(card) });
     }
+    
+    // Réception de l'événement 'cardFlipped' côté client
+    socket.on('cardFlipped', ({ index }) => {
+        const cards = document.querySelectorAll('.memory-card');
+        const card = cards[index];
+        card.textContent = card.dataset.value; // Afficher la valeur de la carte
+    });
   </script>
 </body>
 </html>

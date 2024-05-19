@@ -1,6 +1,5 @@
 const express = require('express');
 const http = require('http');
-// const socketIo = require('socket.io');
 const ip = require('ip');
 const { Server } = require('socket.io');
 const cors = require('cors');
@@ -27,6 +26,9 @@ app.get('/', (req, res) => {
 let users = {};
 let roomsData = {}; 
 const roomUserCount = {};
+let cardValues = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']; // Paires de valeurs de cartes
+let players = []; // Liste des joueurs
+let currentPlayerIndex = 0; // Index du joueur actuel
 
 io.on('connection', (socket) => {
     console.log('a user connected');
@@ -112,7 +114,14 @@ io.on('connection', (socket) => {
 
 
     socket.on('gameStarted', (room) => {
-        io.to(room).emit('gameStarted');
+        cardValues.sort(() => Math.random() - 0.5); // Mélanger les valeurs de cartes
+        io.to(room).emit('gameStarted', cardValues);
+    });
+
+    // événement 'cardFlipped'
+    socket.on('cardFlipped', ({ index, room }) => {
+        // Émettre un événement à tous les autres joueurs dans la même salle
+        socket.broadcast.to(room).emit('cardFlipped', { index });
     });
 
     socket.on('leave', (room) => {
