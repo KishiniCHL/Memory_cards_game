@@ -142,9 +142,12 @@ socket.on("leave", function ({ user, room }) {
 
 let startTime; // Variable pour stocker l'heure de début de la partie
 let timerInterval; // Variable pour stocker l'intervalle du chronomètre
+let cardValues = [];
 
 // une fois le bouton start game cliqué
 socket.on("gameStarted", (cardValues) => {
+  //cardValues = cardValues; // Stocker les valeurs des cartes reçues
+
   // Rendre le bouton startButton invisible
   const startButton = document.getElementById("start-game-button");
   const RemoveRules = document.getElementById("rules");
@@ -280,6 +283,9 @@ function flipCard(event) {
   if (flippedCards.length === 2) {
       canFlip = false; // Empêcher le joueur de retourner d'autres cartes
 
+      // Obtenir les indices avant de réinitialiser le tableau flippedCards
+      const indices = [Array.from(gameBoard.children).indexOf(flippedCards[0]), Array.from(gameBoard.children).indexOf(flippedCards[1])];
+
       if (flippedCards[0].dataset.value === flippedCards[1].dataset.value) {
           // Les cartes correspondent, les rendre invisibles après un délai
           setTimeout(() => {
@@ -289,15 +295,18 @@ function flipCard(event) {
               canFlip = true; // Permettre au joueur de retourner des cartes à nouveau
 
               // Envoyer un événement au serveur pour indiquer qu'une paire a été trouvée
-              socket.emit('pairFound', { player: 'player1', room: currentRoom }); // Modifiez ici en fonction du joueur actuel
+              socket.emit('pairFound', { player: 'player1', indices, room: currentRoom }); // Modifiez ici en fonction du joueur actuel
           }, 1000);
       } else {
-          // Les cartes ne correspondent pas, les retourner face cachée après un délai
+          // Si les cartes ne correspondent pas, les retourner face cachée après un délai
           setTimeout(() => {
-              flippedCards[0].textContent = "🎴";
-              flippedCards[1].textContent = "🎴";
-              flippedCards = [];
-              canFlip = true; // Permettre au joueur de retourner des cartes à nouveau
+            flippedCards[0].textContent = "🎴";
+            flippedCards[1].textContent = "🎴";
+            flippedCards = [];
+            canFlip = true; // Permettre au joueur de retourner des cartes à nouveau
+
+            // Envoyer un événement au serveur pour indiquer que les cartes doivent être retournées
+            socket.emit('cardsDoNotMatch', { indices, room: currentRoom });
           }, 1000);
       }
   }
@@ -309,4 +318,31 @@ socket.on("cardFlipped", ({ index }) => {
   const cards = document.querySelectorAll(".memory-card");
   const card = cards[index];
   card.textContent = card.dataset.value; // Afficher la valeur de la carte
+});
+
+// Réception de l'événement 'cardsDoNotMatch' côté client
+socket.on("cardsDoNotMatch", ({ indices }) => {
+  const cards = document.querySelectorAll(".memory-card");
+  const card1 = cards[indices[0]];
+  const card2 = cards[indices[1]];
+
+  card1.textContent = "🎴";
+  card2.textContent = "🎴";
+});
+
+// Réception de l'événement 'pairFound' côté client
+socket.on("pairFound", ({ indices }) => {
+  console.log('pairFound event received', indices); // Log pour déboguer
+
+  const cards = document.querySelectorAll(".memory-card");
+  const card1 = cards[indices[0]];
+  const card2 = cards[indices[1]];
+
+  console.log('cards', card1, card2); // Log pour déboguer
+
+  // Masquer les cartes correspondantes
+  card1.classList.add("invisible");
+  card2.classList.add("invisible");
+
+  console.log('cards after adding invisible', card1, card2); // Log pour déboguer
 });
