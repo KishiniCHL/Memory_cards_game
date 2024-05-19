@@ -29,6 +29,7 @@ const roomUserCount = {};
 let cardValues = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']; // Paires de valeurs de cartes
 let players = []; // Liste des joueurs
 let currentPlayerIndex = 0; // Index du joueur actuel
+let pairCounts = {};
 
 io.on('connection', (socket) => {
     console.log('a user connected');
@@ -125,6 +126,24 @@ io.on('connection', (socket) => {
         // Émettre un événement à tous les autres joueurs dans la même salle
         socket.broadcast.to(room).emit('cardFlipped', { index });
     });
+
+    socket.on('pairFound', ({ player, room }) => {
+        if (!pairCounts[room]) {
+            pairCounts[room] = { player1: 0, player2: 0 };
+        }
+        
+        // Augmenter le compteur de paires pour le joueur
+        pairCounts[room][player]++;
+        console.log(`${player} found a pair. Total pairs: ${pairCounts[room][player]}`);
+    
+        // Vérifiez si le joueur a trouvé toutes les paires
+        if (pairCounts[room][player] === cardValues.length / 2) {
+            console.log(`${player} has found all pairs and won the game!`);
+            io.to(room).emit('gameOver', { winner: player });
+        }
+    });
+    
+    
 
     socket.on('leave', (room) => {
         socket.leave(room);
