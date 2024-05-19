@@ -13,10 +13,20 @@
   padding: 0 40px;
 }
 
+#usernameDisplay{
+  display: none;
+  text-align: center;
+  margin-bottom: 32px;
+  font-size: 24px;
+}
+
+.pseudo_user{
+  font-weight: bold;
+}
 
 .title2{
   font-family: "Roboto", sans-serif;
-  font-size: 40px;
+  font-size: 24px;
   font-weight: 600;
   text-align: center;
   margin-bottom: 40px;
@@ -56,7 +66,7 @@
 }
 
 .memory-card {
-  background-color: #204051;
+  background-color: #5d63a3;
   width: calc(25% - 10px);
   height: 150px;
   margin-bottom: 10px;
@@ -66,6 +76,7 @@
   justify-content: center;
   align-items: center;
   cursor: pointer;
+  font-size: 25px;
 }
 
 .invisible {

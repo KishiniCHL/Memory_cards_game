@@ -10,6 +10,16 @@ document.getElementById("form").addEventListener("submit", function (event) {
   socket.emit("setUsername", username);
 });
 
+socket.on('usernameSet', (username) => {
+  if (username) {
+      let span = document.querySelector(".pseudo_user");
+      let div = document.querySelector("#usernameDisplay");
+
+      span.textContent = username;
+      div.style.display = "block";
+  }
+});
+
 //creation d'une salle de jeu
 document.getElementById("createRoomButton").addEventListener("click", function (event) {
   event.preventDefault();
@@ -27,6 +37,7 @@ document.getElementById("createRoomButton").addEventListener("click", function (
       socket.emit("roomJoined", roomName);
   } else {
       console.log("Veuillez entrer un nom de salle");
+      alert("Veuillez entrer un nom de salle");
   }
 });
 
@@ -214,11 +225,11 @@ socket.on('pairFound', ({ player }) => {
 
   if (pairCountPlayer1 === cardValues.length / 2) {
       console.log('Player 1 a gagné !');
-      document.getElementById('winner-message').textContent = 'Player 1 a gagné !';
+      document.getElementById('winner-message').textContent = 'Player 1 a trouvé une paire !';
       socket.emit('gameOver', { winner: 'player1', room: currentRoom });
   } else if (pairCountPlayer2 === cardValues.length / 2) {
       console.log('Player 2 a gagné !');
-      document.getElementById('winner-message').textContent = 'Player 2 a gagné !';
+      document.getElementById('winner-message').textContent = 'Player 2 a trouvé une paire !';
       socket.emit('gameOver', { winner: 'player2', room: currentRoom });
   }
 });
@@ -256,7 +267,7 @@ function generateMemoryCards(cardValues) {
     cards.forEach((card) => {
       card.textContent = "🎴"; // Emoji pour une carte face cachée
     });
-  }, 4000);
+  }, 5000);
 }
 
 let canFlip = true; 
